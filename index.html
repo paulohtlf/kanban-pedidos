@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Kanban de Pedidos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="app-header">
+            <h1 class="text-center">
+                <i class="bi bi-kanban"></i>
+                Sistema Kanban de Pedidos
+            </h1>
+        </header>
+
+        <div class="main-content">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h4>Pedidos em Andamento</h4>
+                        <p id="pedidosAndamento">0</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h4>Tempo Médio Total</h4>
+                        <p id="tempoMedioTotal">0 min</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h4>Pedidos Urgentes</h4>
+                        <p id="pedidosUrgentes">0</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-check2-all"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h4>Taxa de Conclusão</h4>
+                        <p id="taxaConclusao">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-container">
+                <div class="kanban-column" data-status="pedido-recebido">
+                    <div class="column-header">
+                        <h3><i class="bi bi-inbox"></i> Pedido Recebido</h3>
+                        <span class="badge bg-primary" id="count-pedido-recebido">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                    <button class="add-card-btn">
+                        <i class="bi bi-plus-lg"></i>
+                        Adicionar Pedido
+                    </button>
+                </div>
+                <div class="kanban-column" data-status="impresso">
+                    <div class="column-header">
+                        <h3><i class="bi bi-printer"></i> Impresso</h3>
+                        <span class="badge bg-primary" id="count-impresso">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+                <div class="kanban-column" data-status="em-separacao">
+                    <div class="column-header">
+                        <h3><i class="bi bi-box-seam"></i> Em Separação</h3>
+                        <span class="badge bg-primary" id="count-em-separacao">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+                <div class="kanban-column" data-status="separado">
+                    <div class="column-header">
+                        <h3><i class="bi bi-check2-square"></i> Separado</h3>
+                        <span class="badge bg-primary" id="count-separado">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+                <div class="kanban-column" data-status="faturado">
+                    <div class="column-header">
+                        <h3><i class="bi bi-receipt"></i> Faturado</h3>
+                        <span class="badge bg-primary" id="count-faturado">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+                <div class="kanban-column" data-status="aguardando-transportadora">
+                    <div class="column-header">
+                        <h3><i class="bi bi-truck"></i> Aguardando Transportadora</h3>
+                        <span class="badge bg-primary" id="count-aguardando-transportadora">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+                <div class="kanban-column" data-status="finalizado">
+                    <div class="column-header">
+                        <h3><i class="bi bi-check-circle"></i> Finalizado</h3>
+                        <span class="badge bg-primary" id="count-finalizado">0</span>
+                    </div>
+                    <div class="cards-container"></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3><i class="bi bi-bar-chart"></i> Tempo Médio por Etapa</h3>
+                    <canvas id="timeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="bi bi-pie-chart"></i> Distribuição de Pedidos</h3>
+                    <canvas id="distributionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="bi bi-graph-up"></i> Pedidos por Prioridade</h3>
+                    <canvas id="priorityChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="bi bi-calendar-week"></i> Evolução Diária</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="summary-container">
+                <div class="search-container">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por número do pedido, cliente ou transportadora...">
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <i class="bi bi-funnel"></i>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Todos os Status</option>
+                                <option value="pedido-recebido">Pedido Recebido</option>
+                                <option value="impresso">Impresso</option>
+                                <option value="em-separacao">Em Separação</option>
+                                <option value="separado">Separado</option>
+                                <option value="faturado">Faturado</option>
+                                <option value="aguardando-transportadora">Aguardando Transportadora</option>
+                                <option value="finalizado">Finalizado</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <i class="bi bi-flag"></i>
+                            <select class="form-select" id="priorityFilter">
+                                <option value="">Todas as Prioridades</option>
+                                <option value="urgente">Urgente</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="8%"><i class="bi bi-hash"></i> Nº Pedido</th>
+                                <th width="15%"><i class="bi bi-person"></i> Cliente</th>
+                                <th width="15%"><i class="bi bi-truck"></i> Transportadora</th>
+                                <th width="8%"><i class="bi bi-flag"></i> Prioridade</th>
+                                <th width="12%"><i class="bi bi-list-check"></i> Status</th>
+                                <th width="12%"><i class="bi bi-calendar"></i> Início</th>
+                                <th width="10%"><i class="bi bi-clock"></i> Tempo Total</th>
+                                <th><i class="bi bi-hourglass-split"></i> Tempo por Etapa</th>
+                                <th width="10%"><i class="bi bi-gear"></i> Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="no-results" id="noResults" style="display: none;">
+                    <i class="bi bi-search"></i>
+                    Nenhum pedido encontrado com os critérios de busca.
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar/editar pedido -->
+        <div class="modal fade" id="pedidoModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-plus-circle"></i>
+                            Adicionar Pedido
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="pedidoForm">
+                            <div class="mb-3">
+                                <label for="numeroPedido" class="form-label">
+                                    <i class="bi bi-hash"></i>
+                                    Número do Pedido
+                                </label>
+                                <input type="text" class="form-control" id="numeroPedido" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nomeCliente" class="form-label">
+                                    <i class="bi bi-person"></i>
+                                    Nome do Cliente
+                                </label>
+                                <input type="text" class="form-control" id="nomeCliente" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="transportadora" class="form-label">
+                                    <i class="bi bi-truck"></i>
+                                    Transportadora
+                                </label>
+                                <input type="text" class="form-control" id="transportadora" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prioridade" class="form-label">
+                                    <i class="bi bi-flag"></i>
+                                    Prioridade
+                                </label>
+                                <select class="form-select" id="prioridade" required>
+                                    <option value="normal">Normal</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i>
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-danger" id="excluirPedido" style="display: none;">
+                            <i class="bi bi-trash"></i>
+                            Excluir
+                        </button>
+                        <button type="button" class="btn btn-primary" id="salvarPedido">
+                            <i class="bi bi-check-lg"></i>
+                            Salvar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para registrar separador -->
+        <div class="modal fade" id="separadorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-person-badge"></i>
+                            Registrar Separador
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="separadorForm">
+                            <div class="mb-3">
+                                <label for="separador" class="form-label">
+                                    <i class="bi bi-person"></i>
+                                    Nome do Separador
+                                </label>
+                                <input type="text" class="form-control" id="separador" required list="separadoresList">
+                                <datalist id="separadoresList">
+                                    <!-- Será preenchido dinamicamente -->
+                                </datalist>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i>
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" id="confirmarSeparador">
+                            <i class="bi bi-check-lg"></i>
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adicionar antes dos gráficos -->
+        <div class="separadores-container">
+            <div class="separadores-header">
+                <h3><i class="bi bi-people"></i> Desempenho dos Separadores</h3>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" id="rankingQuantidade">
+                        <i class="bi bi-sort-numeric-down"></i>
+                        Por Quantidade
+                    </button>
+                    <button class="btn btn-outline-primary" id="rankingVelocidade">
+                        <i class="bi bi-speedometer2"></i>
+                        Por Velocidade
+                    </button>
+                </div>
+            </div>
+            <div class="separadores-grid">
+                <div class="chart-container">
+                    <h4>Quantidade de Pedidos por Separador</h4>
+                    <canvas id="separadoresQuantidadeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Tempo Médio de Separação (minutos)</h4>
+                    <canvas id="separadoresTempoChart"></canvas>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th><i class="bi bi-person"></i> Separador</th>
+                            <th><i class="bi bi-box-seam"></i> Pedidos Separados</th>
+                            <th><i class="bi bi-speedometer2"></i> Tempo Médio</th>
+                            <th><i class="bi bi-clock-history"></i> Tempo Total</th>
+                            <th><i class="bi bi-graph-up"></i> Eficiência</th>
+                        </tr>
+                    </thead>
+                    <tbody id="separadoresTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
